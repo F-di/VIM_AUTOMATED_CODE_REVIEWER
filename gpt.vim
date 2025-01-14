@@ -29,6 +29,10 @@ def call_gpt():
 Here are the suggestions:
 {suggestions}
 Please update the code based on the suggestions also refactor the code for better programing practices. If there are no suggestions, rewrite the code with some useful comments, your task is to refactor the code and make it more readable, maintainable, efficient, and follow best practices and coupling free code.If required, you can also add new functions or classes to improve the code also can remove unnecessary code,comments, or functions and variables,also rename the variables and functions if required or unmeaningfull names, you also have to reduce Cyclomatic Complexity, Cohesion & Coupling and Maintainability Index and Code Duplication.
+Rules you have to work for every language;
+For Python : 1. Check for incorrect indentation, 2. Maximum line length - Check for lines longer than 79 characters, 3. Check for unused imports, 4. Check for missing docstrings in functions and classes, 5. Check for wildcard imports, 6. Check for bare `except` clauses, 7. Check for mutable default arguments in functions, 8. Check for print statements in production code, 9. Ensure main guard exists.
+For C : 1. Check for missing braces, 2. Check for semicolons at the end of statements, 3. Avoid using magic numbers, 4. Check for null pointer dereference.
+For Cpp : 1. Check for `std::` namespace usage, 2. Check for use of smart pointers. 
 Note: Your response should only be  code because your response will be executed directly, so please write only  code
 Please refactor the code based on the suggestions. Return the refactored code in the following format:
 
