@@ -3,6 +3,11 @@
 function! ProvidePythonSuggestions(code_lines)
   let l:suggestions = []
 
+  " Ensure input is valid
+  if type(a:code_lines) != type([])
+    return []
+  endif
+
   " Rule 1: Indentation - Check for incorrect indentation (not multiples of 4 spaces)
   for idx in range(len(a:code_lines))
     let line = a:code_lines[idx]
@@ -23,10 +28,17 @@ function! ProvidePythonSuggestions(code_lines)
   endfor
 
   " Rule 3: Check for unused imports
+  let used_modules = []
   for idx in range(len(a:code_lines))
     let line = a:code_lines[idx]
-    if line =~ '^\s*import ' && getline(idx+1, '$') !~ line[7:]
-      call add(l:suggestions, 'Line ' . (idx+1) . ': Imported module "' . line[7:] . '" is not used.')
+    if line =~ '^\s*import '
+      let module = matchstr(line, '^\s*import\s\+\zs\k\+')
+      call add(used_modules, module)
+    endif
+  endfor
+  for module in used_modules
+    if join(a:code_lines, "\n") !~ '\<'.module.'\>'
+      call add(l:suggestions, 'Module "' . module . '" is imported but not used.')
     endif
   endfor
 
@@ -63,29 +75,60 @@ function! ProvidePythonSuggestions(code_lines)
     endif
   endfor
 
-  " Rule 7: Check for mutable default arguments in functions
-  for idx in range(len(a:code_lines))
-    let line = a:code_lines[idx]
-    if line =~ '^\s*def\s\+\k\+.*\(.*=.*\[\|\{.*\)\):'
-      call add(l:suggestions, 'Line ' . (idx+1) . ': Avoid using mutable default arguments in function definitions.')
-    endif
-  endfor
 
-  " Rule 8: Check for print statements in production code
-  for idx in range(len(a:code_lines))
-    let line = a:code_lines[idx]
-    if line =~ '^\s*print\s*\('
-      call add(l:suggestions, 'Line ' . (idx+1) . ': Remove print statements from production code.')
-    endif
-  endfor
 
   " Rule 9: Ensure main guard exists
   if join(a:code_lines, "\n") !~ 'if __name__ == "__main__":'
     call add(l:suggestions, 'Add "if __name__ == \"__main__\":" guard for script execution.')
   endif
 
+  " Rule 10: Check for missing or redundant comments
+  let comment_count = 0
+  for line in a:code_lines
+    if line =~ '^\s*#'
+      let comment_count += 1
+    endif
+  endfor
+  if comment_count == 0
+    call add(l:suggestions, 'No comments found. Please add meaningful comments to your code.')
+  endif
+
+  " Rule 11: Check variable names for conventions
+  for idx in range(len(a:code_lines))
+    let line = a:code_lines[idx]
+    if line =~ '^\s*\(\k\+\)\s*='
+      let var_name = matchstr(line, '^\s*\zs\k\+\ze\s*=')
+      if var_name !=# tolower(var_name)
+        call add(l:suggestions, 'Line ' . (idx+1) . ': Variable name "' . var_name . '" should be lowercase with underscores.')
+      endif
+    endif
+  endfor
+
+  " Rule 12: Detect unused variables
+  let declared_vars = []
+  let used_vars = []
+  for idx in range(len(a:code_lines))
+    let line = a:code_lines[idx]
+    if line =~ '^\s*\(\k\+\)\s*='
+      let var_name = matchstr(line, '^\s*\zs\k\+\ze\s*=')
+      call add(declared_vars, var_name)
+    endif
+    let words = split(line, '\W\+')
+    for word in words
+      if word =~ '^\k\+$'
+        call add(used_vars, word)
+      endif
+    endfor
+  endfor
+  for var in declared_vars
+    if count(used_vars, var) <= 1
+      call add(l:suggestions, 'Variable "' . var . '" is declared but not used.')
+    endif
+  endfor
+
   return l:suggestions
 endfunction
+
 
 
 function! ProvideCSuggestions(code_lines)
